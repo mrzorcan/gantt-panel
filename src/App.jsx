@@ -31,8 +31,12 @@ export default function App() {
 
   const handleAddTask = () => {
     if (!newTask.person || !newTask.plane || !newTask.start || !newTask.end) return;
-    setTasks([...tasks, newTask]);
+    setTasks([...tasks, { ...newTask, id: Date.now() }]);
     setNewTask({ person: '', plane: '', start: '', end: '' });
+  };
+
+  const handleDeleteTask = (id) => {
+    setTasks(tasks.filter(t => t.id !== id));
   };
 
   const grouped = tasks.reduce((acc, t) => {
@@ -61,14 +65,12 @@ export default function App() {
         <button onClick={handleAddTask}>Ekle</button>
       </div>
 
-      {/* Zaman çizgisi etiketleri */}
       <div style={{ position: 'relative', height: 20, width: totalWidth, marginBottom: 10 }}>
         {timeline.map((t, i) => (
           <div key={i} style={{ position: 'absolute', left: t.left, fontSize: 10, color: '#555' }}>{t.label}</div>
         ))}
       </div>
 
-      {/* Gantt alanı */}
       <div>
         {Object.entries(grouped).map(([person, personTasks]) => (
           <div key={person} style={{ marginBottom: 40 }}>
@@ -78,7 +80,7 @@ export default function App() {
               width: totalWidth,
               height: personTasks.length * 34,
               backgroundImage: 'repeating-linear-gradient(to right, #ddd 1px, transparent 1px)',
-              backgroundSize: `${timelineInterval * pxPerMin}px 100%`,
+              backgroundSize: \`\${timelineInterval * pxPerMin}px 100%\`,
               backgroundRepeat: 'repeat'
             }}>
               {personTasks.map((t, i) => {
@@ -86,7 +88,7 @@ export default function App() {
                 const width = getWidth(t.start, t.end);
                 const color = generateColor(t.plane);
                 return (
-                  <div key={i}
+                  <div key={t.id}
                     style={{
                       position: 'absolute',
                       left,
@@ -104,6 +106,23 @@ export default function App() {
                     }}
                   >
                     {t.plane}
+                    <button
+                      onClick={() => handleDeleteTask(t.id)}
+                      style={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        width: 16,
+                        height: 16,
+                        fontSize: 10,
+                        border: 'none',
+                        borderRadius: '50%',
+                        background: '#444',
+                        color: '#fff',
+                        cursor: 'pointer'
+                      }}
+                      title="Sil"
+                    >×</button>
                   </div>
                 );
               })}
