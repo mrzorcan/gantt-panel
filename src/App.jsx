@@ -1,14 +1,20 @@
 import { useState } from 'react';
 
-const shiftStart = 6 * 60 + 30; // 06:30
+const shiftStart = 6 * 60 + 30;
+const shiftEnd = 15 * 60;
+const pxPerMin = 2;
+const timelineInterval = 30;
 
 const toMinutes = (timeStr) => {
   const [h, m] = timeStr.split(':').map(Number);
   return h * 60 + m;
 };
 
-const getLeft = (start) => (toMinutes(start) - shiftStart) * 2; // 2px per minute
-const getWidth = (start, end) => (toMinutes(end) - toMinutes(start)) * 2;
+const formatHour = (mins) => {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return \`\${h.toString().padStart(2, '0')}:\${m.toString().padStart(2, '0')}\`;
+};
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
@@ -26,6 +32,15 @@ export default function App() {
     return acc;
   }, {});
 
+  const getLeft = (start) => (toMinutes(start) - shiftStart) * pxPerMin;
+  const getWidth = (start, end) => (toMinutes(end) - toMinutes(start)) * pxPerMin;
+  const totalWidth = (shiftEnd - shiftStart) * pxPerMin;
+
+  const timeline = [];
+  for (let m = shiftStart; m <= shiftEnd; m += timelineInterval) {
+    timeline.push({ label: formatHour(m), left: (m - shiftStart) * pxPerMin });
+  }
+
   return (
     <div style={{ padding: 20, fontFamily: 'Arial' }}>
       <h1>Gantt Panel</h1>
@@ -37,26 +52,39 @@ export default function App() {
         <button onClick={handleAddTask}>Ekle</button>
       </div>
 
-      <div style={{ borderTop: '1px solid #ccc', marginTop: 20, paddingTop: 10 }}>
-        {Object.entries(grouped).map(([person, personTasks]) => (
-          <div key={person} style={{ marginBottom: 30 }}>
-            <strong>{person}</strong>
-            <div style={{ position: 'relative', height: 30, background: '#f0f0f0', marginTop: 5 }}>
+      {/* Zaman Çizelgesi */}
+      <div style={{ position: 'relative', height: 20, width: totalWidth, marginBottom: 10 }}>
+        {timeline.map((t, i) => (
+          <div key={i} style={{ position: 'absolute', left: t.left, fontSize: 10, color: '#555' }}>{t.label}</div>
+        ))}
+      </div>
+
+      {/* Gantt Alanı */}
+      <div>
+        {Object.entries(grouped).map(([person, personTasks], index) => (
+          <div key={person} style={{ marginBottom: 25 }}>
+            <div style={{ marginBottom: 4, fontWeight: 'bold' }}>{person}</div>
+            <div style={{
+              position: 'relative',
+              height: 34,
+              width: totalWidth,
+              background: 'repeating-linear-gradient(to right, #f2f2f2 0px, #f2f2f2 1px, #fff 1px, #fff ' + timelineInterval * pxPerMin + 'px)'
+            }}>
               {personTasks.map((t, i) => (
                 <div key={i}
                   style={{
                     position: 'absolute',
                     left: getLeft(t.start),
                     width: getWidth(t.start, t.end),
-                    top: 0,
-                    height: '100%',
+                    height: 30,
                     background: '#4caf50',
                     color: '#fff',
                     textAlign: 'center',
                     fontSize: 12,
                     lineHeight: '30px',
                     borderRadius: 4,
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {t.plane}
