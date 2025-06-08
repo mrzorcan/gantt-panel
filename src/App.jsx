@@ -21,8 +21,8 @@ const generateColor = (key) => {
   for (let i = 0; i < key.length; i++) {
     hash = key.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const hue = hash % 360;
-  return \`hsl(\${hue}, 70%, 60%)\`;
+  const hue = Math.abs(hash) % 360;
+  return \`hsl(\${hue}, 65%, 55%)\`;
 };
 
 export default function App() {
@@ -61,7 +61,7 @@ export default function App() {
         <button onClick={handleAddTask}>Ekle</button>
       </div>
 
-      {/* Zaman çizgisi */}
+      {/* Saat etiketi */}
       <div style={{ position: 'relative', height: 20, width: totalWidth, marginBottom: 10 }}>
         {timeline.map((t, i) => (
           <div key={i} style={{ position: 'absolute', left: t.left, fontSize: 10, color: '#555' }}>{t.label}</div>
@@ -70,9 +70,8 @@ export default function App() {
 
       {/* Gantt Alanı */}
       <div>
-        {Object.entries(grouped).map(([person, personTasks], index) => {
-          // çakışmayı azaltmak için görevleri satır satır gruplar
-          const placed = [];
+        {Object.entries(grouped).map(([person, personTasks]) => {
+          // görevleri çakışmayacak şekilde satırlara dağıt
           const layers = [];
 
           personTasks.forEach(task => {
@@ -91,23 +90,19 @@ export default function App() {
           });
 
           return (
-            <div key={person} style={{ marginBottom: 25 }}>
-              <div style={{ marginBottom: 4, fontWeight: 'bold' }}>{person}</div>
+            <div key={person} style={{ marginBottom: 30 }}>
+              <div style={{ marginBottom: 4, fontWeight: 'bold', textTransform: 'uppercase' }}>{person}</div>
               <div style={{
                 position: 'relative',
                 height: layers.length * 34,
                 width: totalWidth,
-                background: 'repeating-linear-gradient(to right, #f2f2f2 0px, #f2f2f2 1px, #fff 1px, #fff ' + timelineInterval * pxPerMin + 'px)'
+                backgroundImage: 'repeating-linear-gradient(to right, #ccc 1px, transparent 1px), repeating-linear-gradient(to bottom, #eee 1px, transparent 1px)'
               }}>
                 {layers.flatMap((rowTasks, rowIndex) =>
                   rowTasks.map((t, i) => {
                     const left = getLeft(t.start);
                     const width = getWidth(t.start, t.end);
                     const color = generateColor(t.plane);
-                    const isOverlap = rowTasks.some(other =>
-                      other !== t &&
-                      !(toMinutes(other.end) <= toMinutes(t.start) || toMinutes(other.start) >= toMinutes(t.end))
-                    );
                     return (
                       <div key={i + '-' + rowIndex}
                         style={{
@@ -117,8 +112,6 @@ export default function App() {
                           top: rowIndex * 34,
                           height: 30,
                           background: color,
-                          opacity: isOverlap ? 0.7 : 1,
-                          backgroundImage: isOverlap ? 'repeating-linear-gradient(45deg, rgba(255,255,255,0.3) 0, transparent 4px)' : 'none',
                           color: '#fff',
                           textAlign: 'center',
                           fontSize: 12,
