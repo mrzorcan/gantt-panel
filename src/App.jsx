@@ -61,75 +61,55 @@ export default function App() {
         <button onClick={handleAddTask}>Ekle</button>
       </div>
 
-      {/* Saat etiketi */}
+      {/* Zaman çizgisi etiketleri */}
       <div style={{ position: 'relative', height: 20, width: totalWidth, marginBottom: 10 }}>
         {timeline.map((t, i) => (
           <div key={i} style={{ position: 'absolute', left: t.left, fontSize: 10, color: '#555' }}>{t.label}</div>
         ))}
       </div>
 
-      {/* Gantt Alanı */}
+      {/* Gantt alanı */}
       <div>
-        {Object.entries(grouped).map(([person, personTasks]) => {
-          // görevleri çakışmayacak şekilde satırlara dağıt
-          const layers = [];
-
-          personTasks.forEach(task => {
-            const start = toMinutes(task.start);
-            const end = toMinutes(task.end);
-            let row = 0;
-            while (true) {
-              const overlap = (layers[row] || []).some(t =>
-                !(toMinutes(t.end) <= start || toMinutes(t.start) >= end)
-              );
-              if (!overlap) break;
-              row++;
-            }
-            if (!layers[row]) layers[row] = [];
-            layers[row].push(task);
-          });
-
-          return (
-            <div key={person} style={{ marginBottom: 30 }}>
-              <div style={{ marginBottom: 4, fontWeight: 'bold', textTransform: 'uppercase' }}>{person}</div>
-              <div style={{
-                position: 'relative',
-                height: layers.length * 34,
-                width: totalWidth,
-                backgroundImage: 'repeating-linear-gradient(to right, #ccc 1px, transparent 1px), repeating-linear-gradient(to bottom, #eee 1px, transparent 1px)'
-              }}>
-                {layers.flatMap((rowTasks, rowIndex) =>
-                  rowTasks.map((t, i) => {
-                    const left = getLeft(t.start);
-                    const width = getWidth(t.start, t.end);
-                    const color = generateColor(t.plane);
-                    return (
-                      <div key={i + '-' + rowIndex}
-                        style={{
-                          position: 'absolute',
-                          left,
-                          width,
-                          top: rowIndex * 34,
-                          height: 30,
-                          background: color,
-                          color: '#fff',
-                          textAlign: 'center',
-                          fontSize: 12,
-                          lineHeight: '30px',
-                          borderRadius: 4,
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {t.plane}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+        {Object.entries(grouped).map(([person, personTasks]) => (
+          <div key={person} style={{ marginBottom: 40 }}>
+            <div style={{ marginBottom: 4, fontWeight: 'bold', textTransform: 'uppercase' }}>{person}</div>
+            <div style={{
+              position: 'relative',
+              width: totalWidth,
+              height: personTasks.length * 34,
+              backgroundImage: 'repeating-linear-gradient(to right, #ddd 1px, transparent 1px)',
+              backgroundSize: `${timelineInterval * pxPerMin}px 100%`,
+              backgroundRepeat: 'repeat'
+            }}>
+              {personTasks.map((t, i) => {
+                const left = getLeft(t.start);
+                const width = getWidth(t.start, t.end);
+                const color = generateColor(t.plane);
+                return (
+                  <div key={i}
+                    style={{
+                      position: 'absolute',
+                      left,
+                      width,
+                      top: i * 34,
+                      height: 30,
+                      background: color,
+                      color: '#fff',
+                      textAlign: 'center',
+                      fontSize: 12,
+                      lineHeight: '30px',
+                      borderRadius: 4,
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {t.plane}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
